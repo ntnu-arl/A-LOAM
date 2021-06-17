@@ -34,13 +34,45 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#pragma once
+#ifndef COMMON_H_
+#define COMMON_H_
 
 #include <cmath>
 
+// PCL 
+#define PCL_NO_PRECOMPILE
 #include <pcl/point_types.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/impl/voxel_grid.hpp>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/kdtree/impl/kdtree_flann.hpp>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_cloud.h>
 
-typedef pcl::PointXYZI PointType;
+
+// ROS
+#include <sensor_msgs/PointCloud2.h>
+
+// Ouster style point. It might be good to have a velodyne style as well. The only thing that changes is the type name of the time field
+// XYZItr
+struct EIGEN_ALIGN16 Point {
+  PCL_ADD_POINT4D;
+  float intensity;
+  uint32_t t; // Time in nanosecs since the beginning of the scan
+  uint8_t ring;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(Point,
+    (float, x, x)
+    (float, y, y)
+    (float, z, z)
+    (float, intensity, intensity)
+    (std::uint32_t, t, t)
+    (std::uint8_t, ring, ring)
+)
+
+typedef Point PointType;
 
 inline double rad2deg(double radians)
 {
@@ -51,3 +83,5 @@ inline double deg2rad(double degrees)
 {
   return degrees * M_PI / 180.0;
 }
+
+#endif

@@ -34,30 +34,30 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+// ALOAM
+#include "aloam/common.h"
+#include "aloam/tic_toc.h"
+#include "lidarFactor.hpp"
+
+// C++
 #include <cmath>
+#include <mutex>
+#include <queue>
+
+// ROS
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl_conversions/pcl_conversions.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
-#include <eigen3/Eigen/Dense>
-#include <mutex>
-#include <queue>
 
-#include "aloam_velodyne/common.h"
-#include "aloam_velodyne/tic_toc.h"
-#include "lidarFactor.hpp"
+// Eigen
+#include <eigen3/Eigen/Dense>
 
 #define DISTORTION 0
-
 
 int corner_correspondence = 0, plane_correspondence = 0;
 
@@ -74,8 +74,8 @@ double timeSurfPointsFlat = 0;
 double timeSurfPointsLessFlat = 0;
 double timeLaserCloudFullRes = 0;
 
-pcl::KdTreeFLANN<pcl::PointXYZI>::Ptr kdtreeCornerLast(new pcl::KdTreeFLANN<pcl::PointXYZI>());
-pcl::KdTreeFLANN<pcl::PointXYZI>::Ptr kdtreeSurfLast(new pcl::KdTreeFLANN<pcl::PointXYZI>());
+pcl::KdTreeFLANN<PointType>::Ptr kdtreeCornerLast(new pcl::KdTreeFLANN<PointType>());
+pcl::KdTreeFLANN<PointType>::Ptr kdtreeSurfLast(new pcl::KdTreeFLANN<PointType>());
 
 pcl::PointCloud<PointType>::Ptr cornerPointsSharp(new pcl::PointCloud<PointType>());
 pcl::PointCloud<PointType>::Ptr cornerPointsLessSharp(new pcl::PointCloud<PointType>());
@@ -107,6 +107,8 @@ std::queue<sensor_msgs::PointCloud2ConstPtr> surfLessFlatBuf;
 std::queue<sensor_msgs::PointCloud2ConstPtr> fullPointsBuf;
 std::mutex mBuf;
 
+std::ofstream log_file;
+
 // undistort lidar point
 void TransformToStart(PointType const *const pi, PointType *const po)
 {
@@ -133,7 +135,7 @@ void TransformToStart(PointType const *const pi, PointType *const po)
 void TransformToEnd(PointType const *const pi, PointType *const po)
 {
     // undistort point first
-    pcl::PointXYZI un_point_tmp;
+    PointType un_point_tmp;
     TransformToStart(pi, &un_point_tmp);
 
     Eigen::Vector3d un_point(un_point_tmp.x, un_point_tmp.y, un_point_tmp.z);
@@ -192,6 +194,9 @@ int main(int argc, char **argv)
 
     printf("Mapping %d Hz \n", 10 / skipFrameNum);
 
+    log_file.open("/home/nkhedekar/Desktop/workspaces/slam_ws/laser_odom.csv", std::ios::out);
+    log_file << "data_association, nlo, full_time\n";
+
     ros::Subscriber subCornerPointsSharp = nh.subscribe<sensor_msgs::PointCloud2>("/laser_cloud_sharp", 100, laserCloudSharpHandler);
 
     ros::Subscriber subCornerPointsLessSharp = nh.subscribe<sensor_msgs::PointCloud2>("/laser_cloud_less_sharp", 100, laserCloudLessSharpHandler);
@@ -225,6 +230,7 @@ int main(int argc, char **argv)
             !surfFlatBuf.empty() && !surfLessFlatBuf.empty() &&
             !fullPointsBuf.empty())
         {
+            TicToc t_full;
             timeCornerPointsSharp = cornerSharpBuf.front()->header.stamp.toSec();
             timeCornerPointsLessSharp = cornerLessSharpBuf.front()->header.stamp.toSec();
             timeSurfPointsFlat = surfFlatBuf.front()->header.stamp.toSec();
@@ -290,7 +296,7 @@ int main(int argc, char **argv)
                     problem.AddParameterBlock(para_q, 4, q_parameterization);
                     problem.AddParameterBlock(para_t, 3);
 
-                    pcl::PointXYZI pointSel;
+                    PointType pointSel;
                     std::vector<int> pointSearchInd;
                     std::vector<float> pointSearchSqDis;
 
@@ -595,6 +601,7 @@ int main(int argc, char **argv)
                 ROS_WARN("odometry process over 100ms");
 
             frameCount++;
+
         }
         rate.sleep();
     }

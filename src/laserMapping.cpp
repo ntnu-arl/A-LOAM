@@ -34,34 +34,34 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+// ALOAM
+#include "aloam/common.h"
+#include "lidarFactor.hpp"
+#include "aloam/tic_toc.h"
+
+// C++
 #include <math.h>
 #include <vector>
-#include <aloam_velodyne/common.h>
-#include <nav_msgs/Odometry.h>
-#include <nav_msgs/Path.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <ros/ros.h>
-#include <sensor_msgs/Imu.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <tf/transform_datatypes.h>
-#include <tf/transform_broadcaster.h>
-#include <eigen3/Eigen/Dense>
-#include <ceres/ceres.h>
 #include <mutex>
 #include <queue>
 #include <thread>
 #include <iostream>
 #include <string>
 
-#include "lidarFactor.hpp"
-#include "aloam_velodyne/common.h"
-#include "aloam_velodyne/tic_toc.h"
+// ROS
+#include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <ros/ros.h>
+#include <sensor_msgs/Imu.h>
+#include <tf/transform_datatypes.h>
+#include <tf/transform_broadcaster.h>
 
+// Eigen
+#include <eigen3/Eigen/Dense>
+
+// Ceres
+#include <ceres/ceres.h>
 
 int frameCount = 0;
 

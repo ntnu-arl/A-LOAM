@@ -1,7 +1,9 @@
 // Author:   Tong Qin               qintonguav@gmail.com
 // 	         Shaozu Cao 		    saozu.cao@connect.ust.hk
 
-#pragma once
+
+#ifndef TICTOC_H_
+#define TICTOC_H_
 
 #include <ctime>
 #include <cstdlib>
@@ -30,3 +32,6 @@ class TicToc
   private:
     std::chrono::time_point<std::chrono::system_clock> start, end;
 };
+
+
+#endif

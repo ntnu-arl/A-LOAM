@@ -6,7 +6,6 @@
 #include <eigen3/Eigen/Dense>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/kdtree/kdtree_flann.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 struct LidarEdgeFactor

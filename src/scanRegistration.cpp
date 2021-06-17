@@ -35,23 +35,25 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 
+// ALOAM
+#include "aloam/common.h"
+#include "aloam/tic_toc.h"
+
+// C++
 #include <cmath>
 #include <vector>
 #include <string>
-#include "aloam_velodyne/common.h"
-#include "aloam_velodyne/tic_toc.h"
+
+// ROS
 #include <nav_msgs/Odometry.h>
-#include <opencv/cv.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/kdtree/kdtree_flann.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
+
+// OpenCV?
+#include <opencv/cv.h>
 
 using std::atan2;
 using std::cos;
@@ -129,7 +131,7 @@ void laserCloudHandler(const sensor_msgs::PointCloud2ConstPtr &laserCloudMsg)
     std::vector<int> scanStartInd(N_SCANS, 0);
     std::vector<int> scanEndInd(N_SCANS, 0);
 
-    pcl::PointCloud<pcl::PointXYZ> laserCloudIn;
+    pcl::PointCloud<PointType> laserCloudIn;
     pcl::fromROSMsg(*laserCloudMsg, laserCloudIn);
     std::vector<int> indices;
 
@@ -166,44 +168,46 @@ void laserCloudHandler(const sensor_msgs::PointCloud2ConstPtr &laserCloudMsg)
         float angle = atan(point.z / sqrt(point.x * point.x + point.y * point.y)) * 180 / M_PI;
         int scanID = 0;
 
-        if (N_SCANS == 16)
-        {
-            scanID = int((angle + 15) / 2 + 0.5);
-            if (scanID > (N_SCANS - 1) || scanID < 0)
-            {
-                count--;
-                continue;
-            }
-        }
-        else if (N_SCANS == 32)
-        {
-            scanID = int((angle + 92.0/3.0) * 3.0 / 4.0);
-            if (scanID > (N_SCANS - 1) || scanID < 0)
-            {
-                count--;
-                continue;
-            }
-        }
-        else if (N_SCANS == 64)
-        {   
-            if (angle >= -8.83)
-                scanID = int((2 - angle) * 3.0 + 0.5);
-            else
-                scanID = N_SCANS / 2 + int((-8.83 - angle) * 2.0 + 0.5);
+        // if (N_SCANS == 16)
+        // {
+        //     scanID = int((angle + 15) / 2 + 0.5);
+        //     if (scanID > (N_SCANS - 1) || scanID < 0)
+        //     {
+        //         count--;
+        //         continue;
+        //     }
+        // }
+        // else if (N_SCANS == 32)
+        // {
+        //     scanID = int((angle + 92.0/3.0) * 3.0 / 4.0);
+        //     if (scanID > (N_SCANS - 1) || scanID < 0)
+        //     {
+        //         count--;
+        //         continue;
+        //     }
+        // }
+        // else if (N_SCANS == 64)
+        // {   
+        //     if (angle >= -8.83)
+        //         scanID = int((2 - angle) * 3.0 + 0.5);
+        //     else
+        //         scanID = N_SCANS / 2 + int((-8.83 - angle) * 2.0 + 0.5);
 
-            // use [0 50]  > 50 remove outlies 
-            if (angle > 2 || angle < -24.33 || scanID > 50 || scanID < 0)
-            {
-                count--;
-                continue;
-            }
-        }
-        else
-        {
-            printf("wrong scan number\n");
-            ROS_BREAK();
-        }
+        //     // use [0 50]  > 50 remove outlies 
+        //     if (angle > 2 || angle < -24.33 || scanID > 50 || scanID < 0)
+        //     {
+        //         count--;
+        //         continue;
+        //     }
+        // }
+        // else
+        // {
+        //     printf("wrong scan number\n");
+        //     ROS_BREAK();
+        // }
         //printf("angle %f scanID %d \n", angle, scanID);
+
+        scanID = laserCloudIn.points[i].ring;
 
         float ori = -atan2(point.y, point.x);
         if (!halfPassed)
@@ -469,13 +473,13 @@ int main(int argc, char **argv)
 
     printf("scan line number %d \n", N_SCANS);
 
-    if(N_SCANS != 16 && N_SCANS != 32 && N_SCANS != 64)
+    if(N_SCANS != 16 && N_SCANS != 32 && N_SCANS != 64 && N_SCANS != 128)
     {
-        printf("only support velodyne with 16, 32 or 64 scan line!");
+        printf("ALOAM only supports LiDARs with 16, 32, 64 or 128 scan lines!");
         return 0;
     }
 
-    ros::Subscriber subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 100, laserCloudHandler);
+    ros::Subscriber subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>("/points", 100, laserCloudHandler);
 
     pubLaserCloud = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_cloud_2", 100);
 
